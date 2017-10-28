@@ -2,6 +2,8 @@ package rsapemdemo;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
@@ -15,7 +17,17 @@ public final class ZlRsaUtil {
 	/** 用途文本. 如“BEGIN PUBLIC KEY”中的“PUBLIC KEY”. */
 	final static String PURPOSE_TEXT = "PURPOSE_TEXT";
 	/** 用途代码. R私钥， U公钥. */
+	
 	final static String PURPOSE_CODE = "PURPOSE_CODE";
+	/**
+	 * RSA .
+	 */
+	public final static String RSA = "RSA";
+	
+	/**
+	 * 具体的 RSA 算法.
+	 */
+	public final static String RSA_ALGORITHM = "RSA/ECB/PKCS1Padding";
 	
 	/** PEM解码.
 	 * 
@@ -170,6 +182,28 @@ public final class ZlRsaUtil {
 			}
 		}
 		return rt;
+	}
+	
+	/** 将字节数组写入文件, 具有起始位置、长度参数.
+	 * 
+	 * @param filename	文件名.
+	 * @param data	数据.
+	 * @param dataOffset	数据起始.
+	 * @param dataLen	数据长度.
+	 * @throws IOException IO异常.
+	 */
+	public static void fileSaveBytes(String filename, byte[] data, int dataOffset, int dataLen) throws IOException {
+		FileOutputStream fos=null;
+		try {
+			fos = new FileOutputStream(filename);
+			fos.write(data, dataOffset, dataLen);
+		} finally {
+			try {
+				fos.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 }

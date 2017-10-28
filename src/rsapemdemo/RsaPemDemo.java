@@ -2,8 +2,20 @@ package rsapemdemo;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.security.InvalidKeyException;
+import java.security.Key;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 
 /** Java/.NET RSA demo, use pem key file (Java/.NET的RSA加解密演示项目，使用pem格式的密钥文件).
  * 
@@ -95,15 +107,41 @@ public class RsaPemDemo {
 	 * @param fileSrc	源文件.
 	 * @param exargs	扩展参数.
 	 * @throws IOException 
+	 * @throws NoSuchPaddingException 
+	 * @throws NoSuchAlgorithmException 
+	 * @throws InvalidKeySpecException 
+	 * @throws InvalidKeyException 
+	 * @throws BadPaddingException 
+	 * @throws IllegalBlockSizeException 
 	 */
 	private void doEncode(PrintStream out, int keybits, String fileKey, String fileOut,
-			String fileSrc, Map<String, ?> exargs) throws IOException {
+			String fileSrc, Map<String, ?> exargs) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
 		byte[] bytesSrc = ZlRsaUtil.fileLoadBytes(fileSrc);
 		String strDataKey = new String(ZlRsaUtil.fileLoadBytes(fileKey));
 		Map<String, String> map = new HashMap<String, String>();
 		byte[] bytesKey = ZlRsaUtil.pemDecode(strDataKey, map);
 		String purposecode = map.get(ZlRsaUtil.PURPOSE_CODE);
-		out.println(bytesKey);
+		//out.println(bytesKey);
+		// do.
+		KeyFactory kf = KeyFactory.getInstance(ZlRsaUtil.RSA);
+		Key key= null;
+		//boolean isPrivate = false;
+		if ("R".equals(purposecode)) {
+			//isPrivate = true;
+			PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(bytesKey);
+			key = kf.generatePrivate(spec);
+		} else {
+			X509EncodedKeySpec spec = new X509EncodedKeySpec(bytesKey);
+			key = kf.generatePublic(spec);
+		}
+		out.println(String.format("key.getAlgorithm: %s", key.getAlgorithm()));
+		out.println(String.format("key.getFormat: %s", key.getFormat()));
+		Cipher cipher = Cipher.getInstance(ZlRsaUtil.RSA_ALGORITHM);
+		cipher.init(Cipher.ENCRYPT_MODE, key);
+		byte[] cipherBytes = cipher.doFinal(bytesSrc);
+		byte[] cipherBase64 = Base64.encode(cipherBytes);
+		ZlRsaUtil.fileSaveBytes(fileOut, cipherBase64, 0, cipherBase64.length);
+		out.println(String.format("%s save done.", fileOut));
 	}
 
 	/** 进行解密.
