@@ -1,6 +1,8 @@
 package rsapemdemo;
 
+import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.Map;
 
 /** Java/.NET RSA demo, use pem key file (Java/.NET的RSA加解密演示项目，使用pem格式的密钥文件).
@@ -59,20 +61,24 @@ public class RsaPemDemo {
 				}
 			}
 		}
-		if (isEmpty(fileKey)) {
-			out.println("No key file! Command need add `-l [keyfile]`.");
-		} else if (isEmpty(fileOut)) {
-			out.println("No out file! Command need add `-o [outfile]`.");
-		} else if (isEmpty(fileSrc)) {
-			out.println("No src file! Command need add `[srcfile]`.");
-		} else if (isEncode!=false && isDecode!=false) {
-			out.println("No set Encode/Encode! Command need add `-e`/`-d`.");
-		} else if (isEncode) {
-			showhelp = false;
-			doEncode(keybits, fileKey, fileOut, fileSrc, null);
-		} else if (isDecode) {
-			showhelp = false;
-			doDecode(keybits, fileKey, fileOut, fileSrc, null);
+		try{
+			if (isEmpty(fileKey)) {
+				out.println("No key file! Command need add `-l [keyfile]`.");
+			} else if (isEmpty(fileOut)) {
+				out.println("No out file! Command need add `-o [outfile]`.");
+			} else if (isEmpty(fileSrc)) {
+				out.println("No src file! Command need add `[srcfile]`.");
+			} else if (isEncode!=false && isDecode!=false) {
+				out.println("No set Encode/Encode! Command need add `-e`/`-d`.");
+			} else if (isEncode) {
+				showhelp = false;
+				doEncode(out, keybits, fileKey, fileOut, fileSrc, null);
+			} else if (isDecode) {
+				showhelp = false;
+				doDecode(out, keybits, fileKey, fileOut, fileSrc, null);
+			}
+		} catch (Exception e) {
+			e.printStackTrace(out);
 		}
 		// do.
 		if (showhelp) {
@@ -82,27 +88,34 @@ public class RsaPemDemo {
 
 	/** 进行加密.
 	 * 
+	 * @param out	文本打印流.
 	 * @param keybits	密钥位数.
 	 * @param fileKey	密钥文件.
 	 * @param fileOut	输出文件.
 	 * @param fileSrc	源文件.
 	 * @param exargs	扩展参数.
+	 * @throws IOException 
 	 */
-	private void doEncode(int keybits, String fileKey, String fileOut,
-			String fileSrc, Map<String, ?> exargs) {
-		// TODO Auto-generated method stub
-		
+	private void doEncode(PrintStream out, int keybits, String fileKey, String fileOut,
+			String fileSrc, Map<String, ?> exargs) throws IOException {
+		byte[] bytesSrc = ZlRsaUtil.fileLoadBytes(fileSrc);
+		String strDataKey = new String(ZlRsaUtil.fileLoadBytes(fileKey));
+		Map<String, String> map = new HashMap<String, String>();
+		byte[] bytesKey = ZlRsaUtil.pemDecode(strDataKey, map);
+		String purposecode = map.get(ZlRsaUtil.PURPOSE_CODE);
+		out.println(bytesKey);
 	}
 
 	/** 进行解密.
 	 * 
+	 * @param out	文本打印流.
 	 * @param keybits	密钥位数.
 	 * @param fileKey	密钥文件.
 	 * @param fileOut	输出文件.
 	 * @param fileSrc	源文件.
 	 * @param exargs	扩展参数.
 	 */
-	private void doDecode(int keybits, String fileKey, String fileOut,
+	private void doDecode(PrintStream out, int keybits, String fileKey, String fileOut,
 			String fileSrc, Object exargs) {
 		// TODO Auto-generated method stub
 		
