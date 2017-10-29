@@ -55,7 +55,7 @@ public class RsaPemDemo {
 		for(String s: args) {
 			if ("-e".equalsIgnoreCase(s)) {
 				isEncode = true;
-			} else if ("-e".equalsIgnoreCase(s)) {
+			} else if ("-d".equalsIgnoreCase(s)) {
 				isDecode = true;
 			} else if ("-l".equalsIgnoreCase(s)) {
 				state = "l";
@@ -122,7 +122,7 @@ public class RsaPemDemo {
 		byte[] bytesKey = ZlRsaUtil.pemDecode(strDataKey, map);
 		String purposecode = map.get(ZlRsaUtil.PURPOSE_CODE);
 		//out.println(bytesKey);
-		// do.
+		// key.
 		KeyFactory kf = KeyFactory.getInstance(ZlRsaUtil.RSA);
 		Key key= null;
 		//boolean isPrivate = false;
@@ -136,6 +136,7 @@ public class RsaPemDemo {
 		}
 		out.println(String.format("key.getAlgorithm: %s", key.getAlgorithm()));
 		out.println(String.format("key.getFormat: %s", key.getFormat()));
+		// encryption.
 		Cipher cipher = Cipher.getInstance(ZlRsaUtil.RSA_ALGORITHM);
 		cipher.init(Cipher.ENCRYPT_MODE, key);
 		byte[] cipherBytes = cipher.doFinal(bytesSrc);
@@ -152,11 +153,47 @@ public class RsaPemDemo {
 	 * @param fileOut	输出文件.
 	 * @param fileSrc	源文件.
 	 * @param exargs	扩展参数.
+	 * @throws IOException 
+	 * @throws NoSuchAlgorithmException 
+	 * @throws InvalidKeySpecException 
+	 * @throws NoSuchPaddingException 
+	 * @throws InvalidKeyException 
+	 * @throws BadPaddingException 
+	 * @throws IllegalBlockSizeException 
 	 */
 	private void doDecode(PrintStream out, int keybits, String fileKey, String fileOut,
-			String fileSrc, Object exargs) {
-		// TODO Auto-generated method stub
-		
+			String fileSrc, Object exargs) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+		byte[] bytesB64Src = ZlRsaUtil.fileLoadBytes(fileSrc);
+		byte[] bytesSrc = Base64.decode(bytesB64Src);
+		if (null==bytesSrc || bytesSrc.length<=0) {
+			out.println(String.format("Error: %s is not BASE64!", fileSrc));
+			return;
+		}
+		String strDataKey = new String(ZlRsaUtil.fileLoadBytes(fileKey));
+		Map<String, String> map = new HashMap<String, String>();
+		byte[] bytesKey = ZlRsaUtil.pemDecode(strDataKey, map);
+		String purposecode = map.get(ZlRsaUtil.PURPOSE_CODE);
+		//out.println(bytesKey);
+		// key.
+		KeyFactory kf = KeyFactory.getInstance(ZlRsaUtil.RSA);
+		Key key= null;
+		//boolean isPrivate = false;
+		if ("R".equals(purposecode)) {
+			//isPrivate = true;
+			PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(bytesKey);
+			key = kf.generatePrivate(spec);
+		} else {
+			X509EncodedKeySpec spec = new X509EncodedKeySpec(bytesKey);
+			key = kf.generatePublic(spec);
+		}
+		out.println(String.format("key.getAlgorithm: %s", key.getAlgorithm()));
+		out.println(String.format("key.getFormat: %s", key.getFormat()));
+		// decryption.
+		Cipher cipher = Cipher.getInstance(ZlRsaUtil.RSA_ALGORITHM);
+		cipher.init(Cipher.DECRYPT_MODE, key);
+		byte[] cipherBytes = cipher.doFinal(bytesSrc);
+		ZlRsaUtil.fileSaveBytes(fileOut, cipherBytes, 0, cipherBytes.length);
+		out.println(String.format("%s save done.", fileOut));
 	}
 
 	public static void main(String[] args) {

@@ -34,10 +34,10 @@ public final class ZlRsaUtil {
 	 * <p>即去掉BEGIN/END行，并作BASE64解码. 若没有BEGIN/END, 则直接做BASE64解码.</p>
 	 * 
 	 * @param data	源数据.
-	 * @param aresult	其他返回值. 支持 PURPOSE_TEXT, PURPOSE_CODE。
+	 * @param otherresult	其他返回值. 支持 PURPOSE_TEXT, PURPOSE_CODE。
 	 * @return	返回解码后后纯密钥数据.
 	 */
-	public static byte[] pemDecode(String data, Map<String, String> aresult) {
+	public static byte[] pemDecode(String data, Map<String, String> otherresult) {
 		byte[] rt = null;
 		final String SIGN_BEGIN = "-BEGIN";
 		final String SIGN_END = "-END";
@@ -88,7 +88,7 @@ public final class ZlRsaUtil {
 				++p;
 			}
 			// purposetext
-			if (hyphenDone && null!=aresult) {
+			if (hyphenDone && null!=otherresult) {
 				purposetext = data.substring(beginPos + SIGN_BEGIN.length(), hyphenStart).trim();
 				String purposetextUp = purposetext.toUpperCase();
 				if (purposetextUp.indexOf("PRIVATE")>=0) {
@@ -96,8 +96,8 @@ public final class ZlRsaUtil {
 				} else if (purposetextUp.indexOf("PUBLIC")>=0) {
 					purposecode = "U";
 				}
-				aresult.put(PURPOSE_TEXT, purposetext);
-				aresult.put(PURPOSE_CODE, purposecode);
+				otherresult.put(PURPOSE_TEXT, purposetext);
+				otherresult.put(PURPOSE_CODE, purposecode);
 			}
 			// bodyPos.
 			if (isFound) {
