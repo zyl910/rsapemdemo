@@ -1,5 +1,6 @@
 package rsapemdemo;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.security.InvalidKeyException;
@@ -53,7 +54,7 @@ public class RsaPemDemo {
 		String fileKey = null;
 		String fileOut = null;
 		String fileSrc = null;
-		int keybits = 2048;	// RSA密钥位数.
+		int keybits = 0;	// RSA密钥位数. 0表示自动获取.
 		for(String s: args) {
 			if ("-e".equalsIgnoreCase(s)) {
 				isEncode = true;
@@ -103,7 +104,7 @@ public class RsaPemDemo {
 	/** 进行加密.
 	 * 
 	 * @param out	文本打印流.
-	 * @param keybits	密钥位数.
+	 * @param keybits	密钥位数. 为0表示自动获取.
 	 * @param fileKey	密钥文件.
 	 * @param fileOut	输出文件.
 	 * @param fileSrc	源文件.
@@ -146,7 +147,29 @@ public class RsaPemDemo {
 		// encryption.
 		Cipher cipher = Cipher.getInstance(ZlRsaUtil.RSA_ALGORITHM);
 		cipher.init(Cipher.ENCRYPT_MODE, key);
-		byte[] cipherBytes = cipher.doFinal(bytesSrc);
+		byte[] cipherBytes = null;
+		int BlockSize = keybits/8 - 11;	// RSA加密时支持的最大字节数：证书位数/8 -11（比如：2048位的证书，支持的最大加密字节数：2048/8 - 11 = 245）.
+		if (bytesSrc.length <= BlockSize) {
+			// 整个加密.
+			cipherBytes = cipher.doFinal(bytesSrc);
+		} else {	// 公钥或无法判断时, 均当成公钥处理.
+			// 分段加密.
+			int inputLen = bytesSrc.length;
+			ByteArrayOutputStream ostm = new ByteArrayOutputStream();
+			try {
+				for(int offSet = 0; inputLen - offSet > 0; ) {
+					int len = inputLen - offSet;
+					if (len>BlockSize) len=BlockSize;
+					byte[] cache = cipher.doFinal(bytesSrc, offSet, len);
+					ostm.write(cache, 0, cache.length);
+					// next.
+					offSet += len;
+				}
+				cipherBytes = ostm.toByteArray();
+			}finally {
+				ostm.close();			
+			}
+		}
 		byte[] cipherBase64 = Base64.encode(cipherBytes);
 		ZlRsaUtil.fileSaveBytes(fileOut, cipherBase64, 0, cipherBase64.length);
 		out.println(String.format("%s save done.", fileOut));
@@ -155,7 +178,7 @@ public class RsaPemDemo {
 	/** 进行解密.
 	 * 
 	 * @param out	文本打印流.
-	 * @param keybits	密钥位数.
+	 * @param keybits	密钥位数. 为0表示自动获取.
 	 * @param fileKey	密钥文件.
 	 * @param fileOut	输出文件.
 	 * @param fileSrc	源文件.
@@ -189,16 +212,43 @@ public class RsaPemDemo {
 			//isPrivate = true;
 			PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(bytesKey);
 			key = kf.generatePrivate(spec);
-		} else {
+			RSAPrivateKeySpec keySpec = (RSAPrivateKeySpec)kf.getKeySpec(key, RSAPrivateKeySpec.class);
+			keybits = keySpec.getModulus().bitLength();
+		} else {	// 公钥或无法判断时, 均当成公钥处理.
 			X509EncodedKeySpec spec = new X509EncodedKeySpec(bytesKey);
 			key = kf.generatePublic(spec);
+			RSAPublicKeySpec keySpec = (RSAPublicKeySpec)kf.getKeySpec(key, RSAPublicKeySpec.class);
+			keybits = keySpec.getModulus().bitLength();
 		}
 		out.println(String.format("key.getAlgorithm: %s", key.getAlgorithm()));
 		out.println(String.format("key.getFormat: %s", key.getFormat()));
 		// decryption.
 		Cipher cipher = Cipher.getInstance(ZlRsaUtil.RSA_ALGORITHM);
 		cipher.init(Cipher.DECRYPT_MODE, key);
-		byte[] cipherBytes = cipher.doFinal(bytesSrc);
+		//byte[] cipherBytes = cipher.doFinal(bytesSrc);
+		byte[] cipherBytes = null;
+		int BlockSize = keybits/8;
+		if (bytesSrc.length <= BlockSize) {
+			// 整个加密.
+			cipherBytes = cipher.doFinal(bytesSrc);
+		} else {
+			// 分段加密.
+			int inputLen = bytesSrc.length;
+			ByteArrayOutputStream ostm = new ByteArrayOutputStream();
+			try {
+				for(int offSet = 0; inputLen - offSet > 0; ) {
+					int len = inputLen - offSet;
+					if (len>BlockSize) len=BlockSize;
+					byte[] cache = cipher.doFinal(bytesSrc, offSet, len);
+					ostm.write(cache, 0, cache.length);
+					// next.
+					offSet += len;
+				}
+				cipherBytes = ostm.toByteArray();
+			}finally {
+				ostm.close();			
+			}
+		}
 		ZlRsaUtil.fileSaveBytes(fileOut, cipherBytes, 0, cipherBytes.length);
 		out.println(String.format("%s save done.", fileOut));
 	}
