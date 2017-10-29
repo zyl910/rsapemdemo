@@ -8,6 +8,8 @@ import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.RSAPrivateKeySpec;
+import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.Map;
@@ -130,10 +132,15 @@ public class RsaPemDemo {
 			//isPrivate = true;
 			PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(bytesKey);
 			key = kf.generatePrivate(spec);
+			RSAPrivateKeySpec keySpec = (RSAPrivateKeySpec)kf.getKeySpec(key, RSAPrivateKeySpec.class);
+			keybits = keySpec.getModulus().bitLength();
 		} else {
 			X509EncodedKeySpec spec = new X509EncodedKeySpec(bytesKey);
 			key = kf.generatePublic(spec);
+			RSAPublicKeySpec keySpec = (RSAPublicKeySpec)kf.getKeySpec(key, RSAPublicKeySpec.class);
+			keybits = keySpec.getModulus().bitLength();
 		}
+		out.println(String.format("keybits: %d", keybits));
 		out.println(String.format("key.getAlgorithm: %s", key.getAlgorithm()));
 		out.println(String.format("key.getFormat: %s", key.getFormat()));
 		// encryption.

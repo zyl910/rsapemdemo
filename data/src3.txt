@@ -1,0 +1,48 @@
+﻿java.lang 
+类 String
+java.lang.Object
+  继承者 java.lang.String
+所有已实现的接口： 
+Serializable, CharSequence, Comparable<String> 
+
+--------------------------------------------------------------------------------
+
+public final class String
+extends Object
+implements Serializable, Comparable<String>, CharSequence
+
+String 类代表字符串。Java 程序中的所有字符串字面值（如 "abc" ）都作为此类的实例实现。 
+
+字符串是常量；它们的值在创建之后不能更改。字符串缓冲区支持可变的字符串。因为 String 对象是不可变的，所以可以共享。例如： 
+
+
+     String str = "abc";
+ 等效于： 
+
+
+     char data[] = {'a', 'b', 'c'};
+     String str = new String(data);
+ 下面给出了一些如何使用字符串的更多示例： 
+
+
+     System.out.println("abc");
+     String cde = "cde";
+     System.out.println("abc" + cde);
+     String c = "abc".substring(2,3);
+     String d = cde.substring(1, 2);
+ String 类包括的方法可用于检查序列的单个字符、比较字符串、搜索字符串、提取子字符串、创建字符串副本并将所有字符全部转换为大写或小写。大小写映射基于 Character 类指定的 Unicode 标准版。 
+
+Java 语言提供对字符串串联符号（"+"）以及将其他对象转换为字符串的特殊支持。字符串串联是通过 StringBuilder（或 StringBuffer）类及其 append 方法实现的。字符串转换是通过 toString 方法实现的，该方法由 Object 类定义，并可被 Java 中的所有类继承。有关字符串串联和转换的更多信息，请参阅 Gosling、Joy 和 Steele 合著的 The Java Language Specification。 
+
+除非另行说明，否则将 null 参数传递给此类中的构造方法或方法将抛出 NullPointerException。 
+
+String 表示一个 UTF-16 格式的字符串，其中的增补字符 由代理项对 表示（有关详细信息，请参阅 Character 类中的 Unicode 字符表示形式）。索引值是指 char 代码单元，因此增补字符在 String 中占用两个位置。 
+
+String 类提供处理 Unicode 代码点（即字符）和 Unicode 代码单元（即 char 值）的方法。 
+
+
+
+从以下版本开始： 
+JDK1.0 
+另请参见：
+Object.toString(), StringBuffer, StringBuilder, Charset, 序列化表格
