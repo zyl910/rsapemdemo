@@ -44,6 +44,12 @@ public final class ZlRsaUtil {
 		int datelen = data.length();
 		String purposetext = "";
 		String purposecode = "";
+		if (null!=otherresult) {
+			purposetext = otherresult.get(PURPOSE_TEXT);
+			purposecode = otherresult.get(PURPOSE_CODE);
+			if (null==purposetext) purposetext= "";
+			if (null==purposecode) purposecode= "";
+		}
 		// find begin.
 		int bodyPos = 0;	// 主体内容开始的地方.
 		int beginPos = data.indexOf(SIGN_BEGIN);

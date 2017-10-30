@@ -85,7 +85,13 @@ namespace RsaPemDemo {
 		/// <param name="fileSrc">源文件.</param>
 		/// <param name="exargs">扩展参数.</param>
 		private void doEncode(TextWriter outter, int keysize, String fileKey, String fileOut,
-			String fileSrc, IDictionary exargs) {
+				String fileSrc, IDictionary exargs) {
+			byte[] bytesSrc = File.ReadAllBytes(fileSrc);
+			string strDataKey = File.ReadAllText(fileKey);
+			string purposetext = null;
+			char purposecode = '\0';
+			byte[] bytesKey = ZlRsaUtil.PemDecode(strDataKey, ref purposetext, ref purposecode);
+			outter.WriteLine(bytesKey);
 		}
 
 		/// <summary>
@@ -98,7 +104,7 @@ namespace RsaPemDemo {
 		/// <param name="fileSrc">源文件.</param>
 		/// <param name="exargs">扩展参数.</param>
 		private void doDecode(TextWriter outter, int keysize, String fileKey, String fileOut,
-			String fileSrc, IDictionary exargs) {
+				String fileSrc, IDictionary exargs) {
 		}
 
 		static void Main(string[] args) {
