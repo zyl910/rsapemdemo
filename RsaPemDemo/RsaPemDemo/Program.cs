@@ -95,12 +95,18 @@ namespace RsaPemDemo {
 			byte[] bytesKey = ZlRsaUtil.PemUnpack(strDataKey, ref purposetext, ref purposecode);
 			//outter.WriteLine(bytesKey);
 			// key.
-			//X509Certificate2 certificate = new X509Certificate2(bytesKey);
 			RSACryptoServiceProvider rsa;
 			if ('R' == purposecode) {
-				rsa = ZlRsaUtil.PemDecodePrivateKey(bytesKey);
+				rsa = ZlRsaUtil.PemDecodePkcs8PrivateKey(bytesKey);	// try 
+				if (null == rsa) {
+					rsa = ZlRsaUtil.PemDecodeX509PrivateKey(bytesKey);
+				}
 			} else {
 				rsa = ZlRsaUtil.PemDecodePublicKey(bytesKey);
+			}
+			if (null == rsa) {
+				outter.WriteLine("Key decode fail!");
+				return;
 			}
 			outter.WriteLine(String.Format("KeyExchangeAlgorithm: {0}", rsa.KeyExchangeAlgorithm));
 			outter.WriteLine(String.Format("KeySize: {0}", rsa.KeySize));

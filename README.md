@@ -9,9 +9,10 @@ path:
 
 RSA info:
 ```
+Private key encoded: PKCS#8 pem	// PKCS8EncodedKeySpec
+Public key encoded: X.509 pem	// X509EncodedKeySpec
 RSA/ECB/PKCS1Padding
 bits: 2024
-key encode: PKCS#8 pem
 ```
 
 ## Command
