@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Collections;
+using System.Security.Cryptography.X509Certificates;
+using System.Security.Cryptography;
 
 namespace RsaPemDemo {
 	/// <summary>
@@ -90,8 +92,19 @@ namespace RsaPemDemo {
 			string strDataKey = File.ReadAllText(fileKey);
 			string purposetext = null;
 			char purposecode = '\0';
-			byte[] bytesKey = ZlRsaUtil.PemDecode(strDataKey, ref purposetext, ref purposecode);
-			outter.WriteLine(bytesKey);
+			byte[] bytesKey = ZlRsaUtil.PemUnpack(strDataKey, ref purposetext, ref purposecode);
+			//outter.WriteLine(bytesKey);
+			// key.
+			//X509Certificate2 certificate = new X509Certificate2(bytesKey);
+			RSACryptoServiceProvider rsa;
+			if ('R' == purposecode) {
+				rsa = ZlRsaUtil.PemDecodePrivateKey(bytesKey);
+			} else {
+				rsa = ZlRsaUtil.PemDecodePublicKey(bytesKey);
+			}
+			outter.WriteLine(String.Format("KeyExchangeAlgorithm: {0}", rsa.KeyExchangeAlgorithm));
+			outter.WriteLine(String.Format("KeySize: {0}", rsa.KeySize));
+			outter.WriteLine(rsa);
 		}
 
 		/// <summary>

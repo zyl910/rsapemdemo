@@ -29,15 +29,15 @@ public final class ZlRsaUtil {
 	 */
 	public final static String RSA_ALGORITHM = "RSA/ECB/PKCS1Padding";
 	
-	/** PEM解码.
+	/** PEM解包.
 	 * 
-	 * <p>即去掉BEGIN/END行，并作BASE64解码. 若没有BEGIN/END, 则直接做BASE64解码.</p>
+	 * <p>从PEM密钥数据中解包得到纯密钥数据. 即去掉BEGIN/END行，并作BASE64解码. 即去掉BEGIN/END行，并作BASE64解码. 若没有BEGIN/END, 则直接做BASE64解码.</p>
 	 * 
 	 * @param data	源数据.
 	 * @param otherresult	其他返回值. 支持 PURPOSE_TEXT, PURPOSE_CODE。
-	 * @return	返回解码后后纯密钥数据.
+	 * @return	返回解包后后纯密钥数据.
 	 */
-	public static byte[] pemDecode(String data, Map<String, String> otherresult) {
+	public static byte[] PemUnpack(String data, Map<String, String> otherresult) {
 		byte[] rt = null;
 		final String SIGN_BEGIN = "-BEGIN";
 		final String SIGN_END = "-END";

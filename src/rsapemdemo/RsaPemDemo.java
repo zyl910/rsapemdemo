@@ -122,7 +122,7 @@ public class RsaPemDemo {
 		byte[] bytesSrc = ZlRsaUtil.fileLoadBytes(fileSrc);
 		String strDataKey = new String(ZlRsaUtil.fileLoadBytes(fileKey));
 		Map<String, String> map = new HashMap<String, String>();
-		byte[] bytesKey = ZlRsaUtil.pemDecode(strDataKey, map);
+		byte[] bytesKey = ZlRsaUtil.PemUnpack(strDataKey, map);
 		String purposecode = map.get(ZlRsaUtil.PURPOSE_CODE);
 		//out.println(bytesKey);
 		// key.
@@ -201,7 +201,7 @@ public class RsaPemDemo {
 		}
 		String strDataKey = new String(ZlRsaUtil.fileLoadBytes(fileKey));
 		Map<String, String> map = new HashMap<String, String>();
-		byte[] bytesKey = ZlRsaUtil.pemDecode(strDataKey, map);
+		byte[] bytesKey = ZlRsaUtil.PemUnpack(strDataKey, map);
 		String purposecode = map.get(ZlRsaUtil.PURPOSE_CODE);
 		//out.println(bytesKey);
 		// key.

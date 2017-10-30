@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace RsaPemDemo {
@@ -9,15 +11,16 @@ namespace RsaPemDemo {
 	public class ZlRsaUtil {
 
 		/// <summary>
-		/// PEM密钥文件解码.
+		/// PEM解包.
 		/// </summary>
+		/// <para>从PEM密钥数据中解包得到纯密钥数据. 即去掉BEGIN/END行，并作BASE64解码. 若没有BEGIN/END, 则直接做BASE64解码.</para>
 		/// <param name="data">源数据.</param>
 		/// <param name="purposetext">用途文本. 如返回“BEGIN PUBLIC KEY”中的“PUBLIC KEY”.</param>
 		/// <param name="purposecode">用途代码. R私钥， U公钥. 若无法识别，便保持原值.</param>
-		/// <returns>返回解码后后纯密钥数据.</returns>
+		/// <returns>返回解包后后纯密钥数据.</returns>
 		/// <exception cref="System.ArgumentNullException">data is empty, or data body is empty.</exception>
 		/// <exception cref="System.FormatException">data body is not BASE64.</exception>
-		public static byte[] PemDecode(String data, ref string purposetext, ref char purposecode) {
+		public static byte[] PemUnpack(String data, ref string purposetext, ref char purposecode) {
 			byte[] rt = null;
 			const string SIGN_BEGIN = "-BEGIN";
 			const string SIGN_END = "-END";
@@ -26,7 +29,7 @@ namespace RsaPemDemo {
 			// find begin.
 			int bodyPos = 0;	// 主体内容开始的地方.
 			int beginPos = data.IndexOf(SIGN_BEGIN, StringComparison.OrdinalIgnoreCase);
-			if (beginPos>=0) {
+			if (beginPos >= 0) {
 				// 向后查找换行符后的首个字节.
 				bool isFound = false;
 				bool hadNewline = false;	// 已遇到过换行符号.
@@ -35,11 +38,11 @@ namespace RsaPemDemo {
 				int p = beginPos + SIGN_BEGIN.Length;
 				int hyphenStart = p;	// 右侧“-”的开始位置.
 				int hyphenEnd = hyphenStart;	// 右侧“-”的结束位置. 即最后一个“-”字符的位置+1.
-				while(p<datelen) {
+				while (p < datelen) {
 					char ch = data[p];
 					// 查找右侧“-”的范围.
 					if (!hyphenDone) {
-						if (ch=='-') {
+						if (ch == '-') {
 							if (!hyphenHad) {
 								hyphenHad = true;
 								hyphenStart = p;
@@ -53,7 +56,7 @@ namespace RsaPemDemo {
 						}
 					}
 					// 向后查找换行符后的首个字节.
-					if (ch=='\n' || ch=='\r') {
+					if (ch == '\n' || ch == '\r') {
 						hadNewline = true;
 					} else {
 						if (hadNewline) {
@@ -71,7 +74,7 @@ namespace RsaPemDemo {
 					int start = beginPos + SIGN_BEGIN.Length;
 					purposetext = data.Substring(start, hyphenStart - start).Trim();
 					string purposetextUp = purposetext.ToUpperInvariant();
-					if (purposetextUp.IndexOf("PRIVATE")>=0) {
+					if (purposetextUp.IndexOf("PRIVATE") >= 0) {
 						purposecode = 'R';
 					} else if (purposetextUp.IndexOf("PUBLIC") >= 0) {
 						purposecode = 'U';
@@ -91,19 +94,19 @@ namespace RsaPemDemo {
 			// find end.
 			int bodyEnd = datelen;	// 主体内容的结束位置. 即最后一个字符的位置+1.
 			int endPos = data.IndexOf(SIGN_END, bodyPos);
-			if (endPos>=0) {
+			if (endPos >= 0) {
 				// 向前查找换行符前的首个字节.
 				bool isFound = false;
 				bool hadNewline = false;
-				int p = endPos-1;
-				while(p >= bodyPos) {
+				int p = endPos - 1;
+				while (p >= bodyPos) {
 					char ch = data[p];
-					if (ch=='\n' || ch=='\r') {
+					if (ch == '\n' || ch == '\r') {
 						hadNewline = true;
 					} else {
 						if (hadNewline) {
 							// 找到了.
-							bodyEnd = p+1;
+							bodyEnd = p + 1;
 							break;
 						}
 					}
@@ -115,7 +118,7 @@ namespace RsaPemDemo {
 				}
 			}
 			// get body.
-			if (bodyPos>=bodyEnd) {
+			if (bodyPos >= bodyEnd) {
 				return rt;
 			}
 			string body = data.Substring(bodyPos, bodyEnd - bodyPos).Trim();
@@ -125,5 +128,249 @@ namespace RsaPemDemo {
 			return rt;
 		}
 
+		/// <summary>
+		/// 根据PEM纯密钥数据，获取公钥的RSA加解密对象.
+		/// </summary>
+		/// <param name="pubcdata">公钥数据</param>
+		/// <returns>返回公钥的RSA加解密对象.</returns>
+		public static RSACryptoServiceProvider PemDecodePublicKey(byte[] pubcdata) {
+			byte[] SeqOID = { 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01 };
+
+			MemoryStream ms = new MemoryStream(pubcdata);
+			BinaryReader reader = new BinaryReader(ms);
+
+			if (reader.ReadByte() == 0x30)
+				ReadASNLength(reader); //skip the size
+			else
+				return null;
+
+			int identifierSize = 0; //total length of Object Identifier section
+			if (reader.ReadByte() == 0x30)
+				identifierSize = ReadASNLength(reader);
+			else
+				return null;
+
+			if (reader.ReadByte() == 0x06) { //is the next element an object identifier?
+				int oidLength = ReadASNLength(reader);
+				byte[] oidBytes = new byte[oidLength];
+				reader.Read(oidBytes, 0, oidBytes.Length);
+				if (!SequenceEqualByte(oidBytes, SeqOID)) //is the object identifier rsaEncryption PKCS#1?
+					return null;
+
+				int remainingBytes = identifierSize - 2 - oidBytes.Length;
+				reader.ReadBytes(remainingBytes);
+			}
+
+			if (reader.ReadByte() == 0x03) { //is the next element a bit string?
+
+				ReadASNLength(reader); //skip the size
+				reader.ReadByte(); //skip unused bits indicator
+				if (reader.ReadByte() == 0x30) {
+					ReadASNLength(reader); //skip the size
+					if (reader.ReadByte() == 0x02) { //is it an integer?
+						int modulusSize = ReadASNLength(reader);
+						byte[] modulus = new byte[modulusSize];
+						reader.Read(modulus, 0, modulus.Length);
+						if (modulus[0] == 0x00) {//strip off the first byte if it's 0
+							byte[] tempModulus = new byte[modulus.Length - 1];
+							Array.Copy(modulus, 1, tempModulus, 0, modulus.Length - 1);
+							modulus = tempModulus;
+						}
+
+						if (reader.ReadByte() == 0x02) { //is it an integer?
+							int exponentSize = ReadASNLength(reader);
+							byte[] exponent = new byte[exponentSize];
+							reader.Read(exponent, 0, exponent.Length);
+
+							RSACryptoServiceProvider RSA = new RSACryptoServiceProvider();
+							RSAParameters RSAKeyInfo = new RSAParameters();
+							RSAKeyInfo.Modulus = modulus;
+							RSAKeyInfo.Exponent = exponent;
+							RSA.ImportParameters(RSAKeyInfo);
+							return RSA;
+						}
+					}
+				}
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// Read ASN Length.
+		/// </summary>
+		/// <param name="reader">reader</param>
+		/// <returns>Return ASN Length.</returns>
+		private static int ReadASNLength(BinaryReader reader) {
+			//Note: this method only reads lengths up to 4 bytes long as
+			//this is satisfactory for the majority of situations.
+			int length = reader.ReadByte();
+			if ((length & 0x00000080) == 0x00000080) { //is the length greater than 1 byte
+				int count = length & 0x0000000f;
+				byte[] lengthBytes = new byte[4];
+				reader.Read(lengthBytes, 4 - count, count);
+				Array.Reverse(lengthBytes); //
+				length = BitConverter.ToInt32(lengthBytes, 0);
+			}
+			return length;
+		}
+
+		/// <summary>
+		/// 字节数组内容是否相等.
+		/// </summary>
+		/// <param name="a">数组a</param>
+		/// <param name="b">数组b</param>
+		/// <returns>返回是否相等.</returns>
+		private static bool SequenceEqualByte(byte[] a, byte[] b) {
+			var len1 = a.Length;
+			var len2 = b.Length;
+			if (len1 != len2) {
+				return false;
+			}
+			for (var i = 0; i < len1; i++) {
+				if (a[i] != b[i])
+					return false;
+			}
+			return true;
+		}
+
+		/// <summary>
+		/// 根据PEM纯密钥数据，获取私钥的RSA加解密对象.
+		/// </summary>
+		/// <param name="privkey">私钥数据。</param>
+		/// <returns>返回私钥的RSA加解密对象.</returns>
+		public static RSACryptoServiceProvider PemDecodePrivateKey(byte[] privkey) {
+			const bool verbose = false;
+			byte[] MODULUS, E, D, P, Q, DP, DQ, IQ;
+
+			// --------- Set up stream to decode the asn.1 encoded RSA private key ------
+			MemoryStream mem = new MemoryStream(privkey);
+			BinaryReader binr = new BinaryReader(mem);  //wrap Memory Stream with BinaryReader for easy reading
+			byte bt = 0;
+			ushort twobytes = 0;
+			int elems = 0;
+			try {
+				twobytes = binr.ReadUInt16();
+				if (twobytes == 0x8130) //data read as little endian order (actual data order for Sequence is 30 81)
+					binr.ReadByte();    //advance 1 byte
+				else if (twobytes == 0x8230)
+					binr.ReadInt16();    //advance 2 bytes
+				else
+					return null;
+
+				twobytes = binr.ReadUInt16();
+				if (twobytes != 0x0102) //version number
+					return null;
+				bt = binr.ReadByte();
+				if (bt != 0x00)
+					return null;
+
+
+				//------ all private key components are Integer sequences ----
+				elems = GetIntegerSize(binr);
+				MODULUS = binr.ReadBytes(elems);
+
+				elems = GetIntegerSize(binr);
+				E = binr.ReadBytes(elems);
+
+				elems = GetIntegerSize(binr);
+				D = binr.ReadBytes(elems);
+
+				elems = GetIntegerSize(binr);
+				P = binr.ReadBytes(elems);
+
+				elems = GetIntegerSize(binr);
+				Q = binr.ReadBytes(elems);
+
+				elems = GetIntegerSize(binr);
+				DP = binr.ReadBytes(elems);
+
+				elems = GetIntegerSize(binr);
+				DQ = binr.ReadBytes(elems);
+
+				elems = GetIntegerSize(binr);
+				IQ = binr.ReadBytes(elems);
+
+				if (verbose) {
+					Console.WriteLine("showing components ..");
+					showBytes("\nModulus", MODULUS);
+					showBytes("\nExponent", E);
+					showBytes("\nD", D);
+					showBytes("\nP", P);
+					showBytes("\nQ", Q);
+					showBytes("\nDP", DP);
+					showBytes("\nDQ", DQ);
+					showBytes("\nIQ", IQ);
+				}
+
+				// ------- create RSACryptoServiceProvider instance and initialize with public key -----
+				CspParameters CspParameters = new CspParameters();
+				CspParameters.Flags = CspProviderFlags.UseMachineKeyStore;
+				RSACryptoServiceProvider RSA = new RSACryptoServiceProvider(1024, CspParameters);
+				RSAParameters RSAparams = new RSAParameters();
+				RSAparams.Modulus = MODULUS;
+				RSAparams.Exponent = E;
+				RSAparams.D = D;
+				RSAparams.P = P;
+				RSAparams.Q = Q;
+				RSAparams.DP = DP;
+				RSAparams.DQ = DQ;
+				RSAparams.InverseQ = IQ;
+				RSA.ImportParameters(RSAparams);
+				return RSA;
+			} finally {
+				binr.Close();
+			}
+		}
+
+		/// <summary>
+		/// 取得整数位数.
+		/// </summary>
+		/// <param name="binr">二进制流.</param>
+		/// <returns>返回位数.</returns>
+		private static int GetIntegerSize(BinaryReader binr) {
+			byte bt = 0;
+			byte lowbyte = 0x00;
+			byte highbyte = 0x00;
+			int count = 0;
+			bt = binr.ReadByte();
+			if (bt != 0x02)		//expect integer
+				return 0;
+			bt = binr.ReadByte();
+
+			if (bt == 0x81)
+				count = binr.ReadByte();	// data size in next byte
+			else
+				if (bt == 0x82) {
+					highbyte = binr.ReadByte();	// data size in next 2 bytes
+					lowbyte = binr.ReadByte();
+					byte[] modint = { lowbyte, highbyte, 0x00, 0x00 };
+					count = BitConverter.ToInt32(modint, 0);
+				} else {
+					count = bt;		// we already have the data size
+				}
+
+			while (binr.ReadByte() == 0x00) {	//remove high order zeros in data
+				count -= 1;
+			}
+			binr.BaseStream.Seek(-1, SeekOrigin.Current);		//last ReadByte wasn't a removed zero, so back up a byte
+			return count;
+		}
+
+		/// <summary>
+		/// 显示字节数组.
+		/// </summary>
+		/// <param name="info">标题.</param>
+		/// <param name="data">数据.</param>
+		private static void showBytes(String info, byte[] data) {
+			Console.WriteLine("{0} [{1} bytes]", info, data.Length);
+			for (int i = 1; i <= data.Length; i++) {
+				Console.Write("{0:X2} ", data[i - 1]);
+				if (i % 16 == 0)
+					Console.WriteLine();
+			}
+			Console.WriteLine("\n\n");
+		}
+
 	}
+
 }
