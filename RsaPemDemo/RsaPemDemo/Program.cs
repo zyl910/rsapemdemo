@@ -101,7 +101,7 @@ namespace RsaPemDemo {
 				if (null == rsa) {
 					rsa = ZlRsaUtil.PemDecodeX509PrivateKey(bytesKey);
 				}
-			} else {
+			} else {	// 公钥或无法判断时, 均当成公钥处理.
 				rsa = ZlRsaUtil.PemDecodePublicKey(bytesKey);
 			}
 			if (null == rsa) {
@@ -117,7 +117,7 @@ namespace RsaPemDemo {
 			if (bytesSrc.Length <= blockSize) {
 				// 整个加密.
 				cipherBytes = rsa.Encrypt(bytesSrc, false);
-			} else {	// 公钥或无法判断时, 均当成公钥处理.
+			} else {
 				// 分段加密.
 				int inputLen = bytesSrc.Length;
 				using (MemoryStream ostm = new MemoryStream()) {
@@ -151,6 +151,56 @@ namespace RsaPemDemo {
 		/// <param name="exargs">扩展参数.</param>
 		private void doDecode(TextWriter export, int keysize, string fileKey, string fileOut,
 				string fileSrc, IDictionary exargs) {
+			String bytesSrcB64Src = File.ReadAllText(fileSrc);
+			byte[] bytesSrc = Convert.FromBase64String(bytesSrcB64Src);
+			string strDataKey = File.ReadAllText(fileKey);
+			string purposetext = null;
+			char purposecode = '\0';
+			byte[] bytesKey = ZlRsaUtil.PemUnpack(strDataKey, ref purposetext, ref purposecode);
+			//export.WriteLine(bytesKey);
+			// key.
+			RSACryptoServiceProvider rsa;
+			if ('R' == purposecode) {
+				rsa = ZlRsaUtil.PemDecodePkcs8PrivateKey(bytesKey);	// try 
+				if (null == rsa) {
+					rsa = ZlRsaUtil.PemDecodeX509PrivateKey(bytesKey);
+				}
+			} else {	// 公钥或无法判断时, 均当成公钥处理.
+				rsa = ZlRsaUtil.PemDecodePublicKey(bytesKey);
+			}
+			if (null == rsa) {
+				export.WriteLine("Key decode fail!");
+				return;
+			}
+			export.WriteLine(string.Format("KeyExchangeAlgorithm: {0}", rsa.KeyExchangeAlgorithm));
+			export.WriteLine(string.Format("KeySize: {0}", rsa.KeySize));
+			// encryption.
+			if (0 == keysize) keysize = rsa.KeySize;
+			byte[] cipherBytes = null;
+			int blockSize = keysize / 8;
+			if (bytesSrc.Length <= blockSize) {
+				// 整个解密.
+				cipherBytes = rsa.Decrypt(bytesSrc, false);
+			} else {
+				// 分段解密.
+				int inputLen = bytesSrc.Length;
+				using (MemoryStream ostm = new MemoryStream()) {
+					for (int offSet = 0; inputLen - offSet > 0; ) {
+						int len = inputLen - offSet;
+						if (len > blockSize) len = blockSize;
+						byte[] tmp = new byte[len];
+						Array.Copy(bytesSrc, offSet, tmp, 0, len);
+						byte[] cache = rsa.Decrypt(tmp, false);
+						ostm.Write(cache, 0, cache.Length);
+						// next.
+						offSet += len;
+					}
+					ostm.Position = 0;
+					cipherBytes = ostm.ToArray();
+				}
+			}
+			File.WriteAllBytes(fileOut, cipherBytes);
+			export.WriteLine(string.Format("{0} save done.", fileOut));
 		}
 
 		static void Main(string[] args) {

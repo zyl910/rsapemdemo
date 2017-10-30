@@ -17,7 +17,7 @@ import java.util.Map;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalblockSizeException;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 /** Java/.NET RSA demo, use pem key file (Java/.NET的RSA加解密演示项目，使用pem格式的密钥文件).
@@ -115,10 +115,10 @@ public class RsaPemDemo {
 	 * @throws InvalidKeySpecException 
 	 * @throws InvalidKeyException 
 	 * @throws BadPaddingException 
-	 * @throws IllegalblockSizeException 
+	 * @throws IllegalBlockSizeException 
 	 */
 	private void doEncode(PrintStream export, int keysize, String fileKey, String fileOut,
-			String fileSrc, Map<String, ?> exargs) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, IllegalblockSizeException, BadPaddingException {
+			String fileSrc, Map<String, ?> exargs) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
 		byte[] bytesSrc = ZlRsaUtil.fileLoadBytes(fileSrc);
 		String strDataKey = new String(ZlRsaUtil.fileLoadBytes(fileKey));
 		Map<String, String> map = new HashMap<String, String>();
@@ -189,10 +189,10 @@ public class RsaPemDemo {
 	 * @throws NoSuchPaddingException 
 	 * @throws InvalidKeyException 
 	 * @throws BadPaddingException 
-	 * @throws IllegalblockSizeException 
+	 * @throws IllegalBlockSizeException 
 	 */
 	private void doDecode(PrintStream export, int keysize, String fileKey, String fileOut,
-			String fileSrc, Object exargs) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, IllegalblockSizeException, BadPaddingException {
+			String fileSrc, Object exargs) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
 		byte[] bytesB64Src = ZlRsaUtil.fileLoadBytes(fileSrc);
 		byte[] bytesSrc = Base64.decode(bytesB64Src);
 		if (null==bytesSrc || bytesSrc.length<=0) {

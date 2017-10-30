@@ -52,7 +52,7 @@ rsapemdemo -d -l "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\private1
 
 Tip:
 
-* .NET 的RSA，仅支持公钥加密、私钥解密。若用私钥加密，则仍是返回公钥加密结果。若用公钥解密
+* .NET 的RSA，仅支持公钥加密、私钥解密。若用私钥加密，则仍是返回公钥加密结果。若用公钥解密，会出现“System.Security.Cryptography.CryptographicException: 不正确的项。”异常.
 
 ## Reference documentation
 
