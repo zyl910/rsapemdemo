@@ -17,7 +17,7 @@ import java.util.Map;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.IllegalblockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 /** Java/.NET RSA demo, use pem key file (Java/.NET的RSA加解密演示项目，使用pem格式的密钥文件).
@@ -41,11 +41,11 @@ public class RsaPemDemo {
 
 	/** 运行.
 	 * 
-	 * @param out	文本打印流.
+	 * @param export	文本打印流.
 	 * @param args	参数.
 	 * @return	程序退出码.
 	 */
-	public void run(PrintStream out, String[] args) {
+	public void run(PrintStream export, String[] args) {
 		boolean showhelp = true;
 		// args
 		String state = null;	// 状态.
@@ -54,7 +54,7 @@ public class RsaPemDemo {
 		String fileKey = null;
 		String fileOut = null;
 		String fileSrc = null;
-		int keybits = 0;	// RSA密钥位数. 0表示自动获取.
+		int keysize = 0;	// RSA密钥位数. 0表示自动获取.
 		for(String s: args) {
 			if ("-e".equalsIgnoreCase(s)) {
 				isEncode = true;
@@ -78,33 +78,33 @@ public class RsaPemDemo {
 		}
 		try{
 			if (isEmpty(fileKey)) {
-				out.println("No key file! Command need add `-l [keyfile]`.");
+				export.println("No key file! Command need add `-l [keyfile]`.");
 			} else if (isEmpty(fileOut)) {
-				out.println("No out file! Command need add `-o [outfile]`.");
+				export.println("No out file! Command need add `-o [outfile]`.");
 			} else if (isEmpty(fileSrc)) {
-				out.println("No src file! Command need add `[srcfile]`.");
+				export.println("No src file! Command need add `[srcfile]`.");
 			} else if (isEncode!=false && isDecode!=false) {
-				out.println("No set Encode/Encode! Command need add `-e`/`-d`.");
+				export.println("No set Encode/Encode! Command need add `-e`/`-d`.");
 			} else if (isEncode) {
 				showhelp = false;
-				doEncode(out, keybits, fileKey, fileOut, fileSrc, null);
+				doEncode(export, keysize, fileKey, fileOut, fileSrc, null);
 			} else if (isDecode) {
 				showhelp = false;
-				doDecode(out, keybits, fileKey, fileOut, fileSrc, null);
+				doDecode(export, keysize, fileKey, fileOut, fileSrc, null);
 			}
 		} catch (Exception e) {
-			e.printStackTrace(out);
+			e.printStackTrace(export);
 		}
 		// do.
 		if (showhelp) {
-			out.println(helpText);
+			export.println(helpText);
 		}
 	}
 
 	/** 进行加密.
 	 * 
-	 * @param out	文本打印流.
-	 * @param keybits	密钥位数. 为0表示自动获取.
+	 * @param export	文本打印流.
+	 * @param keysize	密钥位数. 为0表示自动获取.
 	 * @param fileKey	密钥文件.
 	 * @param fileOut	输出文件.
 	 * @param fileSrc	源文件.
@@ -115,10 +115,10 @@ public class RsaPemDemo {
 	 * @throws InvalidKeySpecException 
 	 * @throws InvalidKeyException 
 	 * @throws BadPaddingException 
-	 * @throws IllegalBlockSizeException 
+	 * @throws IllegalblockSizeException 
 	 */
-	private void doEncode(PrintStream out, int keybits, String fileKey, String fileOut,
-			String fileSrc, Map<String, ?> exargs) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+	private void doEncode(PrintStream export, int keysize, String fileKey, String fileOut,
+			String fileSrc, Map<String, ?> exargs) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeySpecException, InvalidKeyException, IllegalblockSizeException, BadPaddingException {
 		byte[] bytesSrc = ZlRsaUtil.fileLoadBytes(fileSrc);
 		String strDataKey = new String(ZlRsaUtil.fileLoadBytes(fileKey));
 		Map<String, String> map = new HashMap<String, String>();
@@ -134,22 +134,22 @@ public class RsaPemDemo {
 			PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(bytesKey);
 			key = kf.generatePrivate(spec);
 			RSAPrivateKeySpec keySpec = (RSAPrivateKeySpec)kf.getKeySpec(key, RSAPrivateKeySpec.class);
-			keybits = keySpec.getModulus().bitLength();
+			keysize = keySpec.getModulus().bitLength();
 		} else {
 			X509EncodedKeySpec spec = new X509EncodedKeySpec(bytesKey);
 			key = kf.generatePublic(spec);
 			RSAPublicKeySpec keySpec = (RSAPublicKeySpec)kf.getKeySpec(key, RSAPublicKeySpec.class);
-			keybits = keySpec.getModulus().bitLength();
+			keysize = keySpec.getModulus().bitLength();
 		}
-		out.println(String.format("keybits: %d", keybits));
-		out.println(String.format("key.getAlgorithm: %s", key.getAlgorithm()));
-		out.println(String.format("key.getFormat: %s", key.getFormat()));
+		export.println(String.format("keysize: %d", keysize));
+		export.println(String.format("key.getAlgorithm: %s", key.getAlgorithm()));
+		export.println(String.format("key.getFormat: %s", key.getFormat()));
 		// encryption.
 		Cipher cipher = Cipher.getInstance(ZlRsaUtil.RSA_ALGORITHM);
 		cipher.init(Cipher.ENCRYPT_MODE, key);
 		byte[] cipherBytes = null;
-		int BlockSize = keybits/8 - 11;	// RSA加密时支持的最大字节数：证书位数/8 -11（比如：2048位的证书，支持的最大加密字节数：2048/8 - 11 = 245）.
-		if (bytesSrc.length <= BlockSize) {
+		int blockSize = keysize/8 - 11;	// RSA加密时支持的最大字节数：证书位数/8 -11（比如：2048位的证书，支持的最大加密字节数：2048/8 - 11 = 245）.
+		if (bytesSrc.length <= blockSize) {
 			// 整个加密.
 			cipherBytes = cipher.doFinal(bytesSrc);
 		} else {	// 公钥或无法判断时, 均当成公钥处理.
@@ -159,7 +159,7 @@ public class RsaPemDemo {
 			try {
 				for(int offSet = 0; inputLen - offSet > 0; ) {
 					int len = inputLen - offSet;
-					if (len>BlockSize) len=BlockSize;
+					if (len>blockSize) len=blockSize;
 					byte[] cache = cipher.doFinal(bytesSrc, offSet, len);
 					ostm.write(cache, 0, cache.length);
 					// next.
@@ -172,13 +172,13 @@ public class RsaPemDemo {
 		}
 		byte[] cipherBase64 = Base64.encode(cipherBytes);
 		ZlRsaUtil.fileSaveBytes(fileOut, cipherBase64, 0, cipherBase64.length);
-		out.println(String.format("%s save done.", fileOut));
+		export.println(String.format("%s save done.", fileOut));
 	}
 
 	/** 进行解密.
 	 * 
-	 * @param out	文本打印流.
-	 * @param keybits	密钥位数. 为0表示自动获取.
+	 * @param export	文本打印流.
+	 * @param keysize	密钥位数. 为0表示自动获取.
 	 * @param fileKey	密钥文件.
 	 * @param fileOut	输出文件.
 	 * @param fileSrc	源文件.
@@ -189,14 +189,14 @@ public class RsaPemDemo {
 	 * @throws NoSuchPaddingException 
 	 * @throws InvalidKeyException 
 	 * @throws BadPaddingException 
-	 * @throws IllegalBlockSizeException 
+	 * @throws IllegalblockSizeException 
 	 */
-	private void doDecode(PrintStream out, int keybits, String fileKey, String fileOut,
-			String fileSrc, Object exargs) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+	private void doDecode(PrintStream export, int keysize, String fileKey, String fileOut,
+			String fileSrc, Object exargs) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, IllegalblockSizeException, BadPaddingException {
 		byte[] bytesB64Src = ZlRsaUtil.fileLoadBytes(fileSrc);
 		byte[] bytesSrc = Base64.decode(bytesB64Src);
 		if (null==bytesSrc || bytesSrc.length<=0) {
-			out.println(String.format("Error: %s is not BASE64!", fileSrc));
+			export.println(String.format("Error: %s is not BASE64!", fileSrc));
 			return;
 		}
 		String strDataKey = new String(ZlRsaUtil.fileLoadBytes(fileKey));
@@ -213,22 +213,22 @@ public class RsaPemDemo {
 			PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(bytesKey);
 			key = kf.generatePrivate(spec);
 			RSAPrivateKeySpec keySpec = (RSAPrivateKeySpec)kf.getKeySpec(key, RSAPrivateKeySpec.class);
-			keybits = keySpec.getModulus().bitLength();
+			keysize = keySpec.getModulus().bitLength();
 		} else {	// 公钥或无法判断时, 均当成公钥处理.
 			X509EncodedKeySpec spec = new X509EncodedKeySpec(bytesKey);
 			key = kf.generatePublic(spec);
 			RSAPublicKeySpec keySpec = (RSAPublicKeySpec)kf.getKeySpec(key, RSAPublicKeySpec.class);
-			keybits = keySpec.getModulus().bitLength();
+			keysize = keySpec.getModulus().bitLength();
 		}
-		out.println(String.format("key.getAlgorithm: %s", key.getAlgorithm()));
-		out.println(String.format("key.getFormat: %s", key.getFormat()));
+		export.println(String.format("key.getAlgorithm: %s", key.getAlgorithm()));
+		export.println(String.format("key.getFormat: %s", key.getFormat()));
 		// decryption.
 		Cipher cipher = Cipher.getInstance(ZlRsaUtil.RSA_ALGORITHM);
 		cipher.init(Cipher.DECRYPT_MODE, key);
 		//byte[] cipherBytes = cipher.doFinal(bytesSrc);
 		byte[] cipherBytes = null;
-		int BlockSize = keybits/8;
-		if (bytesSrc.length <= BlockSize) {
+		int blockSize = keysize/8;
+		if (bytesSrc.length <= blockSize) {
 			// 整个加密.
 			cipherBytes = cipher.doFinal(bytesSrc);
 		} else {
@@ -238,7 +238,7 @@ public class RsaPemDemo {
 			try {
 				for(int offSet = 0; inputLen - offSet > 0; ) {
 					int len = inputLen - offSet;
-					if (len>BlockSize) len=BlockSize;
+					if (len>blockSize) len=blockSize;
 					byte[] cache = cipher.doFinal(bytesSrc, offSet, len);
 					ostm.write(cache, 0, cache.length);
 					// next.
@@ -250,7 +250,7 @@ public class RsaPemDemo {
 			}
 		}
 		ZlRsaUtil.fileSaveBytes(fileOut, cipherBytes, 0, cipherBytes.length);
-		out.println(String.format("%s save done.", fileOut));
+		export.println(String.format("%s save done.", fileOut));
 	}
 
 	public static void main(String[] args) {

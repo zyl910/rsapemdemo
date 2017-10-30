@@ -48,9 +48,17 @@ rsapemdemo -e -l "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\private1
 rsapemdemo -d -l "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\public1.pem" -o "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\src1_pri_d.log" "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\src1_pri.log"
 rsapemdemo -d -l "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\private1.pem" -o "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\src1_pub_d.log" "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\src1_pub.log"
 ```
+## Tip
+
+Tip:
+
+* .NET 的RSA，仅支持公钥加密、私钥解密。若用私钥加密，则仍是返回公钥加密结果。若用公钥解密
 
 ## Reference documentation
 
-http://web.chacuo.net/netrsakeypair
-http://panyongzheng.iteye.com/blog/2254459
+* 《在线生成生成RSA密钥对》. http://web.chacuo.net/netrsakeypair
+* Michel I. Gallant Ph.D.《RSA Public, Private, and PKCS #8 key parser》（OpenSSLKey.cs）. http://www.jensign.com/opensslkey/
+* 写代码的二妹《PHP，C# 和JAVARSA签名及验签》. http://www.cnblogs.com/frankyou/p/5993756.html
+* FrankYou《C# RSA 分段加解密》. http://www.cnblogs.com/frankyou/p/5993756.html
+* FrankYou《Java RSA 分段加解密》. http://www.cnblogs.com/frankyou/p/5993685.html
 
