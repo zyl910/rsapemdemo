@@ -1,6 +1,5 @@
 package rsapemdemo;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.security.InvalidKeyException;
@@ -144,32 +143,10 @@ public class RsaPemDemo {
 		export.println(String.format("keysize: %d", keysize));
 		export.println(String.format("key.getAlgorithm: %s", key.getAlgorithm()));
 		export.println(String.format("key.getFormat: %s", key.getFormat()));
-		// encryption.
+		// encrypt.
 		Cipher cipher = Cipher.getInstance(ZlRsaUtil.RSA_ALGORITHM);
 		cipher.init(Cipher.ENCRYPT_MODE, key);
-		byte[] cipherBytes = null;
-		int blockSize = keysize/8 - 11;	// RSA加密时支持的最大字节数：证书位数/8 -11（比如：2048位的证书，支持的最大加密字节数：2048/8 - 11 = 245）.
-		if (bytesSrc.length <= blockSize) {
-			// 整个加密.
-			cipherBytes = cipher.doFinal(bytesSrc);
-		} else {	// 公钥或无法判断时, 均当成公钥处理.
-			// 分段加密.
-			int inputLen = bytesSrc.length;
-			ByteArrayOutputStream ostm = new ByteArrayOutputStream();
-			try {
-				for(int offSet = 0; inputLen - offSet > 0; ) {
-					int len = inputLen - offSet;
-					if (len>blockSize) len=blockSize;
-					byte[] cache = cipher.doFinal(bytesSrc, offSet, len);
-					ostm.write(cache, 0, cache.length);
-					// next.
-					offSet += len;
-				}
-				cipherBytes = ostm.toByteArray();
-			}finally {
-				ostm.close();			
-			}
-		}
+		byte[] cipherBytes = ZlRsaUtil.encrypt(cipher, keysize, bytesSrc);
 		byte[] cipherBase64 = Base64.encode(cipherBytes);
 		ZlRsaUtil.fileSaveBytes(fileOut, cipherBase64, 0, cipherBase64.length);
 		export.println(String.format("%s save done.", fileOut));
@@ -222,33 +199,10 @@ public class RsaPemDemo {
 		}
 		export.println(String.format("key.getAlgorithm: %s", key.getAlgorithm()));
 		export.println(String.format("key.getFormat: %s", key.getFormat()));
-		// decryption.
+		// decrypt.
 		Cipher cipher = Cipher.getInstance(ZlRsaUtil.RSA_ALGORITHM);
 		cipher.init(Cipher.DECRYPT_MODE, key);
-		//byte[] cipherBytes = cipher.doFinal(bytesSrc);
-		byte[] cipherBytes = null;
-		int blockSize = keysize/8;
-		if (bytesSrc.length <= blockSize) {
-			// 整个加密.
-			cipherBytes = cipher.doFinal(bytesSrc);
-		} else {
-			// 分段加密.
-			int inputLen = bytesSrc.length;
-			ByteArrayOutputStream ostm = new ByteArrayOutputStream();
-			try {
-				for(int offSet = 0; inputLen - offSet > 0; ) {
-					int len = inputLen - offSet;
-					if (len>blockSize) len=blockSize;
-					byte[] cache = cipher.doFinal(bytesSrc, offSet, len);
-					ostm.write(cache, 0, cache.length);
-					// next.
-					offSet += len;
-				}
-				cipherBytes = ostm.toByteArray();
-			}finally {
-				ostm.close();			
-			}
-		}
+		byte[] cipherBytes = ZlRsaUtil.decrypt(cipher, keysize, bytesSrc);
 		ZlRsaUtil.fileSaveBytes(fileOut, cipherBytes, 0, cipherBytes.length);
 		export.println(String.format("%s save done.", fileOut));
 	}

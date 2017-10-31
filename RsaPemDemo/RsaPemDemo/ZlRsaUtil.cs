@@ -237,7 +237,7 @@ namespace RsaPemDemo {
 		/// 解码 PKCS#8 编码的私钥，获取私钥的RSA加解密对象.
 		/// </summary>
 		/// <param name="privkey">私钥数据。</param>
-		/// <returns>返回私钥的RSA加解密对象.</returns>
+		/// <returns>返回私钥的RSA加解密对象. 失败时返回null.</returns>
 		public static RSACryptoServiceProvider PemDecodePkcs8PrivateKey(byte[] pkcs8) {
 			// encoded OID sequence for  PKCS #1 rsaEncryption szOID_RSA_RSA = "1.2.840.113549.1.1.1"
 			// this byte[] includes the sequence byte and terminal encoded null 
@@ -297,7 +297,7 @@ namespace RsaPemDemo {
 		/// 解码 X.509 编码的私钥，获取私钥的RSA加解密对象.
 		/// </summary>
 		/// <param name="privkey">私钥数据。</param>
-		/// <returns>返回私钥的RSA加解密对象.</returns>
+		/// <returns>返回私钥的RSA加解密对象. 失败时返回null.</returns>
 		public static RSACryptoServiceProvider PemDecodeX509PrivateKey(byte[] privkey)  
         {  
             byte[] MODULUS, E, D, P, Q, DP, DQ, IQ;  
@@ -426,6 +426,76 @@ namespace RsaPemDemo {
 					Console.WriteLine();
 			}
 			Console.WriteLine("\n\n");
+		}
+
+		/// <summary>
+		/// RSA加密. 当数据较长时, 能自动分段加密.
+		/// </summary>
+		/// <param name="rsa">加解密服务提供者. 需是已初始化的.</param>
+		/// <param name="data">欲加密的数据.</param>
+		/// <returns>返回加密后的数据.</returns>
+		/// <exception cref="System.Security.Cryptography.CryptographicException">On RSACryptoServiceProvider.Encrypt .</exception>
+		public static byte[] Encrypt(RSACryptoServiceProvider rsa, byte[] data) {
+			byte[] cipherBytes = null;
+			int keysize = rsa.KeySize;
+			int blockSize = keysize / 8 - 11;	// RSA加密时支持的最大字节数：证书位数/8 -11（比如：2048位的证书，支持的最大加密字节数：2048/8 - 11 = 245）.
+			if (data.Length <= blockSize) {
+				// 整个加密.
+				cipherBytes = rsa.Encrypt(data, false);
+			} else {
+				// 分段加密.
+				int inputLen = data.Length;
+				using (MemoryStream ostm = new MemoryStream()) {
+					for (int offSet = 0; inputLen - offSet > 0; ) {
+						int len = inputLen - offSet;
+						if (len > blockSize) len = blockSize;
+						byte[] tmp = new byte[len];
+						Array.Copy(data, offSet, tmp, 0, len);
+						byte[] cache = rsa.Encrypt(tmp, false);
+						ostm.Write(cache, 0, cache.Length);
+						// next.
+						offSet += len;
+					}
+					ostm.Position = 0;
+					cipherBytes = ostm.ToArray();
+				}
+			}
+			return cipherBytes;
+		}
+
+		/// <summary>
+		/// RSA解密. 当数据较长时, 能自动分段解密.
+		/// </summary>
+		/// <param name="rsa">加解密服务提供者. 需是已初始化的.</param>
+		/// <param name="data">欲解密的数据.</param>
+		/// <returns>返回解密后的数据.</returns>
+		/// <exception cref="System.Security.Cryptography.CryptographicException">On RSACryptoServiceProvider.Encrypt .</exception>
+		public static byte[] Decrypt(RSACryptoServiceProvider rsa, byte[] data) {
+			byte[] cipherBytes = null;
+			int keysize = rsa.KeySize;
+			int blockSize = keysize / 8;
+			if (data.Length <= blockSize) {
+				// 整个解密.
+				cipherBytes = rsa.Decrypt(data, false);
+			} else {
+				// 分段解密.
+				int inputLen = data.Length;
+				using (MemoryStream ostm = new MemoryStream()) {
+					for (int offSet = 0; inputLen - offSet > 0; ) {
+						int len = inputLen - offSet;
+						if (len > blockSize) len = blockSize;
+						byte[] tmp = new byte[len];
+						Array.Copy(data, offSet, tmp, 0, len);
+						byte[] cache = rsa.Decrypt(tmp, false);
+						ostm.Write(cache, 0, cache.Length);
+						// next.
+						offSet += len;
+					}
+					ostm.Position = 0;
+					cipherBytes = ostm.ToArray();
+				}
+			}
+			return cipherBytes;
 		}
 
 	}

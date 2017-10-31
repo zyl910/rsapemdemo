@@ -110,31 +110,8 @@ namespace RsaPemDemo {
 			}
 			export.WriteLine(string.Format("KeyExchangeAlgorithm: {0}", rsa.KeyExchangeAlgorithm));
 			export.WriteLine(string.Format("KeySize: {0}", rsa.KeySize));
-			// encryption.
-			if (0 == keysize) keysize = rsa.KeySize;
-			byte[] cipherBytes = null;
-			int blockSize = keysize / 8 - 11;	// RSA加密时支持的最大字节数：证书位数/8 -11（比如：2048位的证书，支持的最大加密字节数：2048/8 - 11 = 245）.
-			if (bytesSrc.Length <= blockSize) {
-				// 整个加密.
-				cipherBytes = rsa.Encrypt(bytesSrc, false);
-			} else {
-				// 分段加密.
-				int inputLen = bytesSrc.Length;
-				using (MemoryStream ostm = new MemoryStream()) {
-					for (int offSet = 0; inputLen - offSet > 0; ) {
-						int len = inputLen - offSet;
-						if (len > blockSize) len = blockSize;
-						byte[] tmp = new byte[len];
-						Array.Copy(bytesSrc, offSet, tmp, 0, len);
-						byte[] cache = rsa.Encrypt(tmp, false);
-						ostm.Write(cache, 0, cache.Length);
-						// next.
-						offSet += len;
-					}
-					ostm.Position = 0;
-					cipherBytes = ostm.ToArray();
-				}
-			}
+			// encrypt.
+			byte[] cipherBytes = ZlRsaUtil.Encrypt(rsa, bytesSrc);
 			string cipherBase64 = Convert.ToBase64String(cipherBytes);
 			File.WriteAllText(fileOut, cipherBase64);
 			export.WriteLine(string.Format("{0} save done.", fileOut));
@@ -175,30 +152,7 @@ namespace RsaPemDemo {
 			export.WriteLine(string.Format("KeyExchangeAlgorithm: {0}", rsa.KeyExchangeAlgorithm));
 			export.WriteLine(string.Format("KeySize: {0}", rsa.KeySize));
 			// encryption.
-			if (0 == keysize) keysize = rsa.KeySize;
-			byte[] cipherBytes = null;
-			int blockSize = keysize / 8;
-			if (bytesSrc.Length <= blockSize) {
-				// 整个解密.
-				cipherBytes = rsa.Decrypt(bytesSrc, false);
-			} else {
-				// 分段解密.
-				int inputLen = bytesSrc.Length;
-				using (MemoryStream ostm = new MemoryStream()) {
-					for (int offSet = 0; inputLen - offSet > 0; ) {
-						int len = inputLen - offSet;
-						if (len > blockSize) len = blockSize;
-						byte[] tmp = new byte[len];
-						Array.Copy(bytesSrc, offSet, tmp, 0, len);
-						byte[] cache = rsa.Decrypt(tmp, false);
-						ostm.Write(cache, 0, cache.Length);
-						// next.
-						offSet += len;
-					}
-					ostm.Position = 0;
-					cipherBytes = ostm.ToArray();
-				}
-			}
+			byte[] cipherBytes = ZlRsaUtil.Decrypt(rsa, bytesSrc);
 			File.WriteAllBytes(fileOut, cipherBytes);
 			export.WriteLine(string.Format("{0} save done.", fileOut));
 		}

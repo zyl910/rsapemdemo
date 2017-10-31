@@ -42,11 +42,11 @@ The options:
 Sample:
 
 ```
-rsapemdemo -e -l "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\public1.pem" -o "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\src1_pub.log" "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\src1.txt"
-rsapemdemo -e -l "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\private1.pem" -o "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\src1_pri.log" "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\src1.txt"
+rsapemdemo -e -l "E:\rsapemdemo\data\public1.pem" -o "E:\rsapemdemo\data\src1_pub.log" "E:\rsapemdemo\data\src1.txt"
+rsapemdemo -e -l "E:\rsapemdemo\data\private1.pem" -o "E:\rsapemdemo\data\src1_pri.log" "E:\rsapemdemo\data\src1.txt"
 
-rsapemdemo -d -l "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\public1.pem" -o "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\src1_pri_d.log" "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\src1_pri.log"
-rsapemdemo -d -l "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\private1.pem" -o "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\src1_pub_d.log" "E:\svn\20150630_dxt\workspace_dxt_my2\rsapemdemo\data\src1_pub.log"
+rsapemdemo -d -l "E:\rsapemdemo\data\public1.pem" -o "E:\rsapemdemo\data\src1_pri_d.log" "E:\rsapemdemo\data\src1_pri.log"
+rsapemdemo -d -l "E:\rsapemdemo\data\private1.pem" -o "E:\rsapemdemo\data\src1_pub_d.log" "E:\rsapemdemo\data\src1_pub.log"
 ```
 ## Tip
 

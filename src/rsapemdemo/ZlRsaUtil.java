@@ -1,10 +1,15 @@
 package rsapemdemo;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Map;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 
 /** RSA算法工具.
  * 
@@ -149,6 +154,86 @@ public final class ZlRsaUtil {
 		// Decode BASE64.
 		rt = Base64.decode(body.getBytes());
 		return rt;
+	}
+	
+	/** RSA加密. 当数据较长时, 能自动分段加密.
+	 * 
+	 * @param cipher	加解密服务提供者. 需是已初始化的, 即已经调了init的.
+	 * @param keysize	密钥长度. 例如2048位的RSA，传2048 .
+	 * @param data	欲加密的数据.
+	 * @return	返回加密后的数据.
+	 * @throws BadPaddingException	On Cipher.doFinal
+	 * @throws IllegalBlockSizeException	On Cipher.doFinal
+	 */
+	public static byte[] encrypt(Cipher cipher, int keysize, byte[] data) throws IllegalBlockSizeException, BadPaddingException {
+		byte[] cipherBytes = null;
+		int blockSize = keysize/8 - 11;	// RSA加密时支持的最大字节数：证书位数/8 -11（比如：2048位的证书，支持的最大加密字节数：2048/8 - 11 = 245）.
+		if (data.length <= blockSize) {
+			// 整个加密.
+			cipherBytes = cipher.doFinal(data);
+		} else {	// 公钥或无法判断时, 均当成公钥处理.
+			// 分段加密.
+			int inputLen = data.length;
+			ByteArrayOutputStream ostm = new ByteArrayOutputStream();
+			try {
+				for(int offSet = 0; inputLen - offSet > 0; ) {
+					int len = inputLen - offSet;
+					if (len>blockSize) len=blockSize;
+					byte[] cache = cipher.doFinal(data, offSet, len);
+					ostm.write(cache, 0, cache.length);
+					// next.
+					offSet += len;
+				}
+				cipherBytes = ostm.toByteArray();
+			}finally {
+				try {
+					ostm.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}			
+			}
+		}
+		return cipherBytes;
+	}
+	
+	/** RSA解密. 当数据较长时, 能自动分段解密.
+	 * 
+	 * @param cipher	加解密服务提供者. 需是已初始化的, 即已经调了init的.
+	 * @param keysize	密钥长度. 例如2048位的RSA，传2048 .
+	 * @param data	欲解密的数据.
+	 * @return	返回解密后的数据.
+	 * @throws BadPaddingException	On Cipher.doFinal
+	 * @throws IllegalBlockSizeException	On Cipher.doFinal
+	 */
+	public static byte[] decrypt(Cipher cipher, int keysize, byte[] data) throws IllegalBlockSizeException, BadPaddingException {
+		byte[] cipherBytes = null;
+		int blockSize = keysize/8;
+		if (data.length <= blockSize) {
+			// 整个加密.
+			cipherBytes = cipher.doFinal(data);
+		} else {
+			// 分段加密.
+			int inputLen = data.length;
+			ByteArrayOutputStream ostm = new ByteArrayOutputStream();
+			try {
+				for(int offSet = 0; inputLen - offSet > 0; ) {
+					int len = inputLen - offSet;
+					if (len>blockSize) len=blockSize;
+					byte[] cache = cipher.doFinal(data, offSet, len);
+					ostm.write(cache, 0, cache.length);
+					// next.
+					offSet += len;
+				}
+				cipherBytes = ostm.toByteArray();
+			}finally {
+				try {
+					ostm.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}			
+			}
+		}
+		return cipherBytes;
 	}
 
 	// == File ==
