@@ -19,10 +19,10 @@ import javax.crypto.IllegalBlockSizeException;
  */
 public final class ZlRsaUtil {
 	/** 用途文本. 如“BEGIN PUBLIC KEY”中的“PUBLIC KEY”. */
-	final static String PURPOSE_TEXT = "PURPOSE_TEXT";
+	public final static String PURPOSE_TEXT = "PURPOSE_TEXT";
 	/** 用途代码. R私钥， U公钥. */
 	
-	final static String PURPOSE_CODE = "PURPOSE_CODE";
+	public final static String PURPOSE_CODE = "PURPOSE_CODE";
 	/**
 	 * RSA .
 	 */
