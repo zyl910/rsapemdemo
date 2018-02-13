@@ -17,7 +17,7 @@ namespace RsaPemDemo {
 		/// <param name="data">源数据.</param>
 		/// <param name="purposetext">用途文本. 如返回“BEGIN PUBLIC KEY”中的“PUBLIC KEY”.</param>
 		/// <param name="purposecode">用途代码. R私钥， U公钥. 若无法识别，便保持原值.</param>
-		/// <returns>返回解包后后纯密钥数据.</returns>
+		/// <returns>返回解包后的纯密钥数据.</returns>
 		/// <exception cref="System.ArgumentNullException">data is empty, or data body is empty.</exception>
 		/// <exception cref="System.FormatException">data body is not BASE64.</exception>
 		public static byte[] PemUnpack(String data, ref string purposetext, ref char purposecode) {

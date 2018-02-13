@@ -32,8 +32,8 @@ For example:
 
 The options:
 
-    -e        AES encryption and BASE64 encode.
-    -d        BASE64 decode and AES decryption.
+    -e        RSA encryption and BASE64 encode.
+    -d        BASE64 decode and RSA decryption.
     -l [keyfile]  Load key file.
     -o [outfile]  out file.
 
@@ -48,11 +48,19 @@ rsapemdemo -e -l "E:\rsapemdemo\data\private1.pem" -o "E:\rsapemdemo\data\src1_p
 rsapemdemo -d -l "E:\rsapemdemo\data\public1.pem" -o "E:\rsapemdemo\data\src1_pri_d.log" "E:\rsapemdemo\data\src1_pri.log"
 rsapemdemo -d -l "E:\rsapemdemo\data\private1.pem" -o "E:\rsapemdemo\data\src1_pub_d.log" "E:\rsapemdemo\data\src1_pub.log"
 ```
+
 ## Tip
 
 Tip:
 
-* .NET 的RSA，仅支持公钥加密、私钥解密。若用私钥加密，则仍是返回公钥加密结果。若用公钥解密，会出现“System.Security.Cryptography.CryptographicException: 不正确的项。”异常.
+* .NET 的RSA，仅支持公钥加密、私钥解密。若用私钥加密，则仍是返回公钥加密结果。若用公钥解密，会出现 `System.Security.Cryptography.CryptographicException: 不正确的项。` 异常.
+
+
+## Change history (变更日志)
+
+### [2018-02-13] v1.0: http://www.cnblogs.com/zyl910/p/rsapemdemo_cs_java.html
+
+* Release v1.0 (发布1.0版).
 
 ## Reference documentation
 

@@ -21,8 +21,8 @@ public final class ZlRsaUtil {
 	/** 用途文本. 如“BEGIN PUBLIC KEY”中的“PUBLIC KEY”. */
 	public final static String PURPOSE_TEXT = "PURPOSE_TEXT";
 	/** 用途代码. R私钥， U公钥. */
-	
 	public final static String PURPOSE_CODE = "PURPOSE_CODE";
+	
 	/**
 	 * RSA .
 	 */
@@ -35,11 +35,11 @@ public final class ZlRsaUtil {
 	
 	/** PEM解包.
 	 * 
-	 * <p>从PEM密钥数据中解包得到纯密钥数据. 即去掉BEGIN/END行，并作BASE64解码. 即去掉BEGIN/END行，并作BASE64解码. 若没有BEGIN/END, 则直接做BASE64解码.</p>
+	 * <p>从PEM密钥数据中解包得到纯密钥数据. 即去掉BEGIN/END行，并作BASE64解码. 若没有BEGIN/END, 则直接做BASE64解码.</p>
 	 * 
 	 * @param data	源数据.
 	 * @param otherresult	其他返回值. 支持 PURPOSE_TEXT, PURPOSE_CODE。
-	 * @return	返回解包后后纯密钥数据.
+	 * @return	返回解包后的纯密钥数据.
 	 */
 	public static byte[] PemUnpack(String data, Map<String, String> otherresult) {
 		byte[] rt = null;
@@ -171,7 +171,7 @@ public final class ZlRsaUtil {
 		if (data.length <= blockSize) {
 			// 整个加密.
 			cipherBytes = cipher.doFinal(data);
-		} else {	// 公钥或无法判断时, 均当成公钥处理.
+		} else {
 			// 分段加密.
 			int inputLen = data.length;
 			ByteArrayOutputStream ostm = new ByteArrayOutputStream();
